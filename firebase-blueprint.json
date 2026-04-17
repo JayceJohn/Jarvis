@@ -1,0 +1,52 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "userName": { "type": "string" },
+        "userPfp": { "type": "string" },
+        "themeSettings": {
+          "type": "object",
+          "properties": {
+            "primary": { "type": "string" },
+            "secondary": { "type": "string" },
+            "useGradient": { "type": "boolean" },
+            "opacity": { "type": "number" }
+          }
+        }
+      },
+      "required": ["uid"]
+    },
+    "Chat": {
+      "title": "Chat",
+      "description": "Chat session",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "createdAt": { "type": "object", "description": "Timestamp" }
+      },
+      "required": ["userId"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Chat message",
+      "type": "object",
+      "properties": {
+        "chatId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "object", "description": "Timestamp" }
+      },
+      "required": ["chatId", "senderId", "text"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": { "schema": "User", "description": "User documents" },
+    "/users/{userId}/chats/{chatId}": { "schema": "Chat", "description": "Chat sessions per user" },
+    "/users/{userId}/chats/{chatId}/messages/{messageId}": { "schema": "Message", "description": "Messages in a chat" }
+  }
+}

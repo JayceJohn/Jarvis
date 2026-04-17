@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isValidId(id) { return id is string && id.size() <= 128; }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // --- Validation Blueprints ---
+    function isValidUser(data) {
+      return (data.get('userName', '') is string && data.get('userName', '').size() <= 100) &&
+             (data.get('userPfp', '') is string && data.get('userPfp', '').size() <= 1000000);
+    }
+
+    function isValidChat(data) {
+      return (data.get('title', '') is string) &&
+             (data.get('createdAt', request.time) == request.time || data.get('createdAt', request.time) == existing().get('createdAt', request.time));
+    }
+
+    function isValidMessage(data) {
+      return (data.get('text', '') is string) &&
+             (data.get('senderId', '') == request.auth.uid || data.get('senderId', '') == 'jarvis') &&
+             (data.get('createdAt', request.time) == request.time);
+    }
+
+    // --- Match Blocks ---
+
+    // User Profile
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidUser(incoming());
+      
+      // Chats Subcollection
+      match /chats/{chatId} {
+        allow list: if isOwner(userId);
+        allow get: if isOwner(userId);
+        
+        allow create: if isOwner(userId) && isValidChat(incoming());
+        allow update: if isOwner(userId) && (
+            // Flexibly allow updates to title or updatedAt
+            incoming().diff(existing()).affectedKeys().hasOnly(['title']) ||
+            incoming().diff(existing()).affectedKeys().hasOnly(['updatedAt']) ||
+            incoming().diff(existing()).affectedKeys().hasOnly(['title', 'updatedAt'])
+        );
+        
+        // Messages Subcollection
+        match /messages/{messageId} {
+          allow list: if isOwner(userId);
+          allow get: if isOwner(userId);
+          allow create: if isOwner(userId) && isValidMessage(incoming());
+        }
+      }
+    }
+  }
+}
