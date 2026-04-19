@@ -2,8 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>InfoGenius Vision - AI Image Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Jarvis - AI Assistant</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#ef4444">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23ef4444%22/></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -26,26 +30,13 @@
             background-size: 20px 20px;
             background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
         }
-        /* Custom scrollbar for text areas if needed */
-        ::-webkit-scrollbar {
-          width: 8px;
-          height: 8px;
+        /* Hide scrollbar for all browsers */
+        * {
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;  /* Firefox */
         }
-        ::-webkit-scrollbar-track {
-          background: transparent; 
-        }
-        ::-webkit-scrollbar-thumb {
-          background: #cbd5e1; 
-          border-radius: 4px;
-        }
-        .dark ::-webkit-scrollbar-thumb {
-          background: #334155; 
-        }
-        ::-webkit-scrollbar-thumb:hover {
-          background: #94a3b8; 
-        }
-        .dark ::-webkit-scrollbar-thumb:hover {
-          background: #475569; 
+        *::-webkit-scrollbar {
+          display: none; /* Chrome, Safari and Opera */
         }
     </style>
   <script type="importmap">

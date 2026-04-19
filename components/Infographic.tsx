@@ -4,7 +4,7 @@
 */
 import React, { useState } from 'react';
 import { GeneratedImage } from '../types';
-import { Download, Sparkles, Edit3, Maximize2, X, ZoomIn, ZoomOut, RefreshCcw } from 'lucide-react';
+import { Download, Sparkles, Edit3, Maximize2, X, ZoomIn, ZoomOut, Save } from 'lucide-react';
 
 interface InfographicProps {
   image: GeneratedImage;
@@ -16,6 +16,38 @@ const Infographic: React.FC<InfographicProps> = ({ image, onEdit, isEditing }) =
   const [editPrompt, setEditPrompt] = useState('');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [downloadFormat, setDownloadFormat] = useState<'png' | 'jpeg'>('png');
+  const [downloadQuality, setDownloadQuality] = useState<number>(1);
+
+  const handleDownload = () => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        
+        if (ctx) {
+            if (downloadFormat === 'jpeg') {
+                ctx.fillStyle = "#FFFFFF";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            ctx.drawImage(img, 0, 0);
+            
+            const dataUrl = canvas.toDataURL(`image/${downloadFormat}`, downloadQuality);
+            const link = document.createElement('a');
+            link.download = `infographic-${image.id || Date.now()}.${downloadFormat === 'jpeg' ? 'jpg' : 'png'}`;
+            link.href = dataUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        setIsDownloadModalOpen(false);
+    };
+    img.src = image.data;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,14 +92,13 @@ const Infographic: React.FC<InfographicProps> = ({ image, onEdit, isEditing }) =
           >
             <Maximize2 className="w-5 h-5" />
           </button>
-          <a 
-            href={image.data} 
-            download={`infographic-${image.id}.png`}
+          <button 
+            onClick={() => setIsDownloadModalOpen(true)}
             className="bg-black/60 backdrop-blur-md text-white p-3 rounded-xl shadow-lg hover:bg-cyan-600 transition-colors border border-white/10 block"
-            title="Download Image"
+            title="Download Options"
           >
             <Download className="w-5 h-5" />
-          </a>
+          </button>
         </div>
       </div>
 
@@ -116,6 +147,71 @@ const Infographic: React.FC<InfographicProps> = ({ image, onEdit, isEditing }) =
             PROMPT: {image.prompt}
         </p>
       </div>
+
+      {/* Download Options Modal */}
+      {isDownloadModalOpen && (
+        <div className="fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+            <div className="flex justify-between items-center p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50">
+              <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                <Download className="w-4 h-4 text-cyan-600" />
+                Export Image
+              </h3>
+              <button onClick={() => setIsDownloadModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full p-1 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-5 space-y-5">
+                <div>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Format</label>
+                    <div className="flex gap-2">
+                        <button 
+                            onClick={() => setDownloadFormat('png')}
+                            className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium border transition-colors ${downloadFormat === 'png' ? 'bg-cyan-50 dark:bg-cyan-900/30 border-cyan-500 text-cyan-700 dark:text-cyan-400' : 'bg-transparent border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                        >
+                            PNG
+                        </button>
+                        <button 
+                            onClick={() => setDownloadFormat('jpeg')}
+                            className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium border transition-colors ${downloadFormat === 'jpeg' ? 'bg-cyan-50 dark:bg-cyan-900/30 border-cyan-500 text-cyan-700 dark:text-cyan-400' : 'bg-transparent border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                        >
+                            JPG
+                        </button>
+                    </div>
+                </div>
+
+                {downloadFormat === 'jpeg' && (
+                    <div className="animate-in fade-in slide-in-from-top-2">
+                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3 flex justify-between">
+                            <span>Quality</span>
+                            <span>{Math.round(downloadQuality * 100)}%</span>
+                        </label>
+                        <input 
+                            type="range" 
+                            min="0.1" max="1" step="0.1" 
+                            value={downloadQuality} 
+                            onChange={(e) => setDownloadQuality(parseFloat(e.target.value))}
+                            className="w-full accent-cyan-600"
+                        />
+                        <div className="flex justify-between mt-1 text-[10px] text-slate-400 uppercase">
+                            <span>Small File</span>
+                            <span>High Res</span>
+                        </div>
+                    </div>
+                )}
+
+                <button 
+                    onClick={handleDownload}
+                    className="w-full mt-4 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-cyan-500/20"
+                >
+                    <Save className="w-5 h-5" />
+                    Save to Device
+                </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Fullscreen Modal */}
       {isFullscreen && (

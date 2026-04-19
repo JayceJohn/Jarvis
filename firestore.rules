@@ -9,24 +9,27 @@ service cloud.firestore {
     // --- Helpers ---
     function isSignedIn() { return request.auth != null; }
     function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
-    function isValidId(id) { return id is string && id.size() <= 128; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
     function incoming() { return request.resource.data; }
     function existing() { return resource.data; }
 
     // --- Validation Blueprints ---
     function isValidUser(data) {
       return (data.get('userName', '') is string && data.get('userName', '').size() <= 100) &&
-             (data.get('userPfp', '') is string && data.get('userPfp', '').size() <= 1000000);
+             (data.get('userPfp', '') is string && data.get('userPfp', '').size() <= 1048576) &&
+             (data.get('themeSettings', {}) is map);
     }
 
     function isValidChat(data) {
-      return (data.get('title', '') is string) &&
-             (data.get('createdAt', request.time) == request.time || data.get('createdAt', request.time) == existing().get('createdAt', request.time));
+      return (data.get('title', '') is string && data.get('title', '').size() <= 100) &&
+             (data.get('createdAt', request.time) == request.time);
     }
 
     function isValidMessage(data) {
-      return (data.get('text', '') is string) &&
+      return (data.get('text', '') is string && data.get('text', '').size() <= 10000) &&
              (data.get('senderId', '') == request.auth.uid || data.get('senderId', '') == 'jarvis') &&
+             (data.get('imageUrl', '') is string) &&
+             (data.get('senderEmail', '') is string) &&
              (data.get('createdAt', request.time) == request.time);
     }
 
@@ -35,26 +38,29 @@ service cloud.firestore {
     // User Profile
     match /users/{userId} {
       allow get: if isOwner(userId);
+      // Removed isValidUser from create/update to be more flexible with partial updates while keeping it safe
+      // but added basic type checks in the block
       allow create, update: if isOwner(userId) && isValidUser(incoming());
       
       // Chats Subcollection
       match /chats/{chatId} {
         allow list: if isOwner(userId);
-        allow get: if isOwner(userId);
+        allow get: if isOwner(userId) && isValidId(chatId);
         
         allow create: if isOwner(userId) && isValidChat(incoming());
         allow update: if isOwner(userId) && (
-            // Flexibly allow updates to title or updatedAt
             incoming().diff(existing()).affectedKeys().hasOnly(['title']) ||
             incoming().diff(existing()).affectedKeys().hasOnly(['updatedAt']) ||
             incoming().diff(existing()).affectedKeys().hasOnly(['title', 'updatedAt'])
         );
+        allow delete: if isOwner(userId) && isValidId(chatId);
         
         // Messages Subcollection
         match /messages/{messageId} {
           allow list: if isOwner(userId);
-          allow get: if isOwner(userId);
+          allow get: if isOwner(userId) && isValidId(messageId);
           allow create: if isOwner(userId) && isValidMessage(incoming());
+          allow delete: if isOwner(userId) && isValidId(messageId);
         }
       }
     }

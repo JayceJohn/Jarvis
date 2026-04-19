@@ -10,10 +10,10 @@ const getAi = () => {
   return new GoogleGenAI({ apiKey: process.env.API_KEY });
 };
 
-// Updated to use 'gemini-3-pro-image-preview' for all operations including search grounding and image generation as requested
-const TEXT_MODEL = 'gemini-3-pro-preview';
-const IMAGE_MODEL = 'gemini-3-pro-image-preview';
-const EDIT_MODEL = 'gemini-3-pro-image-preview';
+// Updated to use stable aliases
+const TEXT_MODEL = 'gemini-flash-latest';
+const IMAGE_MODEL = 'gemini-2.5-flash-image';
+const EDIT_MODEL = 'gemini-2.5-flash-image';
 
 const getLevelInstruction = (level: ComplexityLevel): string => {
   switch (level) {

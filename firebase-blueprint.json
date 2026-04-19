@@ -15,7 +15,9 @@
             "primary": { "type": "string" },
             "secondary": { "type": "string" },
             "useGradient": { "type": "boolean" },
-            "opacity": { "type": "number" }
+            "opacity": { "type": "number" },
+            "language": { "type": "string", "description": "ISO language code" },
+            "voiceType": { "type": "string", "enum": ["male", "female"] }
           }
         }
       },
